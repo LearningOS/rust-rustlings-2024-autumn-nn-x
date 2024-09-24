@@ -2,7 +2,6 @@
 	heap
 	This question requires you to implement a binary heap function
 */
-// I AM NOT DONE
 
 use std::cmp::Ord;
 use std::default::Default;
@@ -40,13 +39,12 @@ where
         self.items.push(value);
         self.count += 1;
         
-        let mut idx = self.count - 1;
-        while idx > 0 && self.comparator(&self.items[idx], &self.items[self.parent_idx(idx)]) {
-            self.items.swap(idx, self.parent_idx(idx));
-            idx = self.parent_idx(idx);
+        let mut idx = self.count;
+        while idx > 1 && (self.comparator)(&self.items[idx], &self.items[self.parent_idx(idx)]) {
+            let parent_idx = self.parent_idx(idx);
+            self.items.swap(idx, parent_idx);
+            idx = parent_idx;
         }
-        self.items[idx] = value;
-
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
@@ -66,14 +64,17 @@ where
     }
 
     fn smallest_child_idx(&self, idx: usize) -> usize {
-        let left_child = self.items[self.left_child_idx(idx)];
-        let right_child = self.items[self.right_child_idx(idx)];
-
-        if self.comparator(&left_child, &right_child) {
-            self.left_child_idx(idx)
-        } else {
-            self.right_child_idx(idx)
+        if !self.children_present(idx) {
+            return idx;
         }
+        let left_idx = self.left_child_idx(idx);
+        let right_idx = self.right_child_idx(idx);
+        if right_idx > self.count || (self.comparator)(&self.items[left_idx], &self.items[right_idx]) {
+            left_idx
+        } else {
+            right_idx
+        }
+
     }
 }
 
@@ -99,8 +100,25 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
-        //TODO
-		None
+        if self.is_empty() {
+            return None;
+        }
+        println!("{}", self.count);
+        self.items.swap(1, self.count);
+        let res = self.items.pop();
+        self.count -= 1;
+
+        let mut idx = 1;
+        while 2 * idx <= self.count {
+            let smallest_idx = self.smallest_child_idx(idx);
+            if (self.comparator)(&self.items[smallest_idx], &self.items[idx]) {
+                self.items.swap(idx, smallest_idx);
+                idx = smallest_idx;
+            } else {
+                break;
+            }
+        }
+        res      
     }
 }
 
@@ -155,6 +173,7 @@ mod tests {
     #[test]
     fn test_max_heap() {
         let mut heap = MaxHeap::new();
+        println!("{:?}", heap.items);
         heap.add(4);
         heap.add(2);
         heap.add(9);
